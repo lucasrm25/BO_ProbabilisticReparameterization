@@ -222,6 +222,14 @@ def run_one_replication(
         assert X_init.shape[-1] == base_function.effective_dim
         X = X_init.to(**tkwargs)
         Y = Y_init.to(**tkwargs)
+
+    # remove nans (failures)
+    X_all = X.clone()
+    Y_all = Y.clone()
+    idx_failure = torch.isnan(Y).any(1)
+    X = X[~idx_failure,:]
+    Y = Y[~idx_failure,:]
+
     standardize_tf = Standardize(m=Y.shape[-1])
     stdized_Y, _ = standardize_tf(Y)
     standardize_tf.eval()
@@ -229,7 +237,7 @@ def run_one_replication(
 
     # Set some counters to keep track of things.
     start_time = time()
-    existing_iterations = 0
+    existing_iterations = len(Y)
     wall_time = torch.zeros(iterations, dtype=dtype)
     if is_moo:
         bd = DominatedPartitioning(ref_point=base_function.ref_point, Y=Y)
@@ -535,9 +543,13 @@ def run_one_replication(
         # Get the new observations and update the data.
         new_y = eval_problem(candidates, base_function=base_function)
 
-        if use_trust_region:
+        idx_failure = torch.isnan(new_y).any(1)
+        candidates_valid = candidates[~idx_failure]
+        new_y_valid = new_y[~idx_failure]
+
+        if use_trust_region and len(new_y_valid)>0:
             old_length = trbo_state.length
-            trbo_state = update_state(state=trbo_state, Y_next=new_y)
+            trbo_state = update_state(state=trbo_state, Y_next=new_y_valid)
             if trbo_state.length != old_length:
                 print(
                     f"TR length changed from {old_length:.3f} to {trbo_state.length:3f}"
@@ -550,8 +562,11 @@ def run_one_replication(
                     is_constrained=is_constrained,
                 )
 
-        X = torch.cat([X, candidates], dim=0)
-        Y = torch.cat([Y, new_y], dim=0)
+        X_all = torch.cat([X, candidates], dim=0)
+        Y_all = torch.cat([Y, new_y], dim=0)
+
+        X = torch.cat([X, candidates_valid], dim=0)
+        Y = torch.cat([Y, new_y_valid], dim=0)
         standardize_tf.train()
         stdized_Y, _ = standardize_tf(Y)
         standardize_tf.eval()
@@ -584,6 +599,8 @@ def run_one_replication(
         if save_frequency is not None and iterations % save_frequency == 0:
             output_dict = {
                 "label": label,
+                "X_all": X_all.cpu(),
+                "Y_all": Y_all.cpu(),
                 "X": X.cpu(),
                 "Y": Y.cpu(),
                 "wall_time": wall_time[: i + 1],
@@ -595,6 +612,8 @@ def run_one_replication(
         # Save the final output
         output_dict = {
             "label": label,
+            "X_all": X_all.cpu(),
+            "Y_all": Y_all.cpu(),
             "X": X.cpu(),
             "Y": Y.cpu(),
             "wall_time": wall_time,
@@ -605,3 +624,5 @@ def run_one_replication(
             "all_true_af_trajs": all_true_af_trajs,
         }
         save_callback(output_dict)
+
+    return output_dict

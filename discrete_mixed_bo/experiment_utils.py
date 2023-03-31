@@ -74,6 +74,7 @@ from discrete_mixed_bo.problems.pest import PestControl
 from discrete_mixed_bo.problems.re_problems import PressureVessel
 from discrete_mixed_bo.problems.svm import SVMFeatureSelection
 from discrete_mixed_bo.problems.welded_beam import WeldedBeam
+from discrete_mixed_bo.problems.equation_discovery import EquationDiscovery
 from discrete_mixed_bo.problems.xgboost_hp import XGBoostHyperparameter
 from discrete_mixed_bo.rffs import get_gp_sample_w_transforms
 
@@ -723,6 +724,11 @@ def get_problem(name: str, dim: Optional[int] = None, **kwargs) -> DiscreteTestP
         return WeldedBeam(
             negate=True,
             continuous=kwargs.get("continuous", False),
+        )
+    elif name == "equation_discovery":
+        return EquationDiscovery(
+            negate=True,
+            model = kwargs['model']
         )
     else:
         raise ValueError(f"Unknown function name: {name}!")
