@@ -237,7 +237,7 @@ def run_one_replication(
 
     # Set some counters to keep track of things.
     start_time = time()
-    existing_iterations = len(Y)
+    existing_iterations = len(Y_all)
     wall_time = torch.zeros(iterations, dtype=dtype)
     if is_moo:
         bd = DominatedPartitioning(ref_point=base_function.ref_point, Y=Y)
