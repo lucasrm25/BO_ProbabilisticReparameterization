@@ -78,12 +78,12 @@ supported_labels = [
 
 
 def run_one_replication(
-    seed: int,
     label: str,
     iterations: int,
     function_name: str,
     batch_size: int,
     mc_samples: int,
+    seed: int = None,
     n_initial_points: Optional[int] = None,
     optimization_kwargs: Optional[dict] = None,
     dim: Optional[int] = None,
@@ -120,8 +120,9 @@ def run_one_replication(
         acqf_optim_seed: a seed for AF optimization.
     """
     assert label in supported_labels, "Label not supported!"
-    torch.manual_seed(seed)
-    np.random.seed(seed)
+    if seed is not None:
+        torch.manual_seed(seed)
+        np.random.seed(seed)
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tkwargs = {"dtype": dtype, "device": device}

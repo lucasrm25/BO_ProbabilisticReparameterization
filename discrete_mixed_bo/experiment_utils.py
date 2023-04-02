@@ -727,7 +727,6 @@ def get_problem(name: str, dim: Optional[int] = None, **kwargs) -> DiscreteTestP
         )
     elif name == "equation_discovery":
         return EquationDiscovery(
-            negate=True,
             model = kwargs['model']
         )
     else:
