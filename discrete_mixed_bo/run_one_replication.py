@@ -330,6 +330,11 @@ def run_one_replication(
     all_true_af_trajs = []
     one_hot_to_numeric = None
     for i in range(existing_iterations, iterations):
+
+        # if len(Y_all) != i:
+        #     raise Exception("Y_all and i are not the same length")
+        # # save_callback(output_dict)
+        
         loss_traj = []
         xs_traj = []
         true_af_traj = []
@@ -563,8 +568,8 @@ def run_one_replication(
                     is_constrained=is_constrained,
                 )
 
-        X_all = torch.cat([X, candidates], dim=0)
-        Y_all = torch.cat([Y, new_y], dim=0)
+        X_all = torch.cat([X_all, candidates], dim=0)
+        Y_all = torch.cat([Y_all, new_y], dim=0)
 
         X = torch.cat([X, candidates_valid], dim=0)
         Y = torch.cat([Y, new_y_valid], dim=0)
@@ -624,6 +629,6 @@ def run_one_replication(
             "all_xs_trajs": all_xs_trajs,
             "all_true_af_trajs": all_true_af_trajs,
         }
-        save_callback(output_dict)
+
 
     return output_dict
